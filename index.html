@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Typing Speed Test — Check Your WPM</title>
+  <meta name="description" content="Free typing speed test. Check your WPM and CPM typing scores in 60 seconds. Practice and improve your typing speed.">
+  <meta name="theme-color" content="#4a3828">
+  <link rel="stylesheet" href="index.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌨️</text></svg>">
+</head>
+<body>
+  <div class="app-background" id="app">
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+
+    <!-- Header -->
+    <header class="header">
+      <h1>Typing Speed Test</h1>
+      <p>Test your typing skills</p>
+    </header>
+
+    <!-- Duration Selector -->
+    <div class="duration-selector" id="duration-selector">
+      <button class="duration-btn active" data-time="60">1 min</button>
+      <button class="duration-btn" data-time="120">2 min</button>
+      <button class="duration-btn" data-time="180">3 min</button>
+      <button class="duration-btn" data-time="300">5 min</button>
+    </div>
+
+    <!-- Test Card -->
+    <div class="test-card" id="test-card">
+      <!-- Metrics Bar -->
+      <div class="metrics-bar">
+        <div class="metrics-group">
+          <div class="metric-box" id="metric-wpm">
+            <span class="value" id="wpm-value">0</span>
+            <span class="label">words/min</span>
+          </div>
+          <div class="metric-box" id="metric-cpm">
+            <span class="value" id="cpm-value">0</span>
+            <span class="label">chars/min</span>
+          </div>
+          <div class="metric-box" id="metric-acc">
+            <span class="value" id="acc-value">0</span>
+            <span class="label">% accuracy</span>
+          </div>
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-container">
+          <div class="timer-circle" id="timer-circle">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 110" width="110" height="110">
+              <circle cx="55" cy="55" r="53" fill="none" id="timer-track" stroke="#ddd6ca" stroke-width="3" stroke-dasharray="332px" />
+              <circle cx="55" cy="55" r="53" fill="none" stroke="#b82e14" stroke-width="3"
+                stroke-dasharray="332px" stroke-dashoffset="0" stroke-linecap="round"
+                class="timer-progress" id="timer-progress"
+                style="transform: rotate(-90deg); transform-origin: center center;" />
+            </svg>
+            <span class="timer-value" id="timer-value">60</span>
+            <span class="timer-label">seconds</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Typing Area -->
+      <div class="typing-area" id="typing-area">
+        <div class="start-indicator" id="start-indicator">Start typing</div>
+        <div class="words-container" id="words-container">
+          <div class="words-inner" id="words-inner">
+            <!-- Words rendered by JS -->
+          </div>
+        </div>
+        <input type="text" class="hidden-input" id="test-input"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus>
+      </div>
+    </div>
+
+    <!-- Reset Button -->
+    <button class="reset-btn" id="reset-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      Reset
+    </button>
+
+    <!-- Results Overlay -->
+    <div class="results-overlay" id="results-overlay">
+      <div class="results-card">
+        <div class="results-header">
+          <div class="results-avatar">
+            <span class="emoji" id="results-emoji">🐢</span>
+          </div>
+          <div class="results-title" id="results-title">You're a Turtle.</div>
+          <p class="results-subtitle" id="results-subtitle"></p>
+        </div>
+        <div class="results-metrics">
+          <div class="result-metric">
+            <div class="value" id="result-wpm">0</div>
+            <div class="label">words/min</div>
+          </div>
+          <div class="result-metric">
+            <div class="value" id="result-cpm">0</div>
+            <div class="label">chars/min</div>
+          </div>
+          <div class="result-metric">
+            <div class="value" id="result-acc">0</div>
+            <div class="label">% accuracy</div>
+          </div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-try-again" id="btn-try-again">Try again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="words.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
