@@ -18,7 +18,6 @@
   --paper-shadow: #c5b9a8;
   --paper-edge: #e6ddd0;
   --paper-line: #ede6db;
-  --paper-ruled: rgba(160,140,110,0.22);
 
   /* Ink */
   --ink: #1a1612;
@@ -63,7 +62,6 @@
 
   /* Header on desk */
   --header-color: #e8dcc8;
-  --header-sub: #b8a890;
 
   /* Texture noise intensity */
   --noise-opacity: 0.35;
@@ -85,7 +83,6 @@
   --paper-shadow: #0a0908;
   --paper-edge: #2e2a26;
   --paper-line: #242120;
-  --paper-ruled: rgba(255,255,255,0.035);
 
   --ink: #e0d8cc;
   --ink-secondary: #a89c8c;
@@ -123,7 +120,6 @@
   --overlay-bg: rgba(0, 0, 0, 0.85);
 
   --header-color: #c8bfb0;
-  --header-sub: #6b6050;
 
   --noise-opacity: 0.2;
   --paper-noise-opacity: 0.06;
@@ -237,16 +233,6 @@ body::after {
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.header p {
-  font-family: 'IBM Plex Mono', monospace;
-  font-weight: 400;
-  font-size: 0.95rem;
-  color: var(--header-sub);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
 /* ===== Theme Toggle — brass switch ===== */
 .theme-toggle {
   position: fixed;
@@ -262,6 +248,7 @@ body::after {
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
+  color: var(--key-letter);
   box-shadow: 0 3px 0 var(--key-side), 0 3px 8px rgba(0,0,0,0.15),
               inset 0 1px 0 var(--glass-highlight-strong);
   transition: all 0.1s ease;
@@ -293,7 +280,7 @@ body::after {
   font-size: 0.8rem;
   padding: 0.55rem 1.15rem;
   border: 2px solid var(--key-rim);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--key-top);
   color: var(--key-letter);
   cursor: pointer;
@@ -334,7 +321,7 @@ body::after {
 .test-card {
   background: var(--paper);
   border: 1px solid var(--paper-edge);
-  border-radius: 3px;
+  border-radius: 0;
   box-shadow: var(--card-shadow);
   width: 100%;
   max-width: 56rem;
@@ -348,7 +335,7 @@ body::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 3px;
+  border-radius: 0;
   opacity: var(--paper-noise-opacity);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
   background-size: 200px 200px;
@@ -370,7 +357,7 @@ body::after {
     var(--glass-highlight-strong),
     transparent
   );
-  border-radius: 3px 3px 0 0;
+  border-radius: 0;
   pointer-events: none;
   z-index: 3;
 }
@@ -401,7 +388,7 @@ body::after {
   width: 5.5rem;
   height: 5rem;
   border: 1px solid var(--gauge-rim);
-  border-radius: 6px;
+  border-radius: 3px;
   background:
     linear-gradient(
       170deg,
@@ -425,7 +412,7 @@ body::after {
   right: 4px;
   height: 1px;
   background: var(--glass-highlight-strong);
-  border-radius: 6px 6px 0 0;
+  border-radius: 3px 3px 0 0;
 }
 
 /* Subtle bottom shadow for depth */
@@ -437,7 +424,7 @@ body::after {
   right: 4px;
   height: 1px;
   background: rgba(0,0,0,0.06);
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 3px 3px;
 }
 
 .metric-box .value {
@@ -547,31 +534,46 @@ body::after {
   transition: stroke-dashoffset 1s linear;
 }
 
-/* ===== Typing Area — paper with ruled lines ===== */
+/* ===== Typing Area — ruled notebook paper ===== */
 .typing-area {
-  padding: 2.75rem 2.25rem 2.25rem;
+  padding: 2.75rem 2.25rem 2.25rem 4.5rem;
   position: relative;
   cursor: text;
   background: var(--paper);
-  /* Ruled notebook lines — single visible line for horizontal mode */
+  /* Ruled lines matching 3rem line-height — visible whether text is there or not */
   background-image: repeating-linear-gradient(
-    transparent, transparent calc(2.5rem - 1px),
-    var(--paper-ruled) calc(2.5rem - 1px), var(--paper-ruled) 2.5rem
+    to bottom,
+    transparent 0px,
+    transparent calc(3rem - 1px),
+    rgba(120, 140, 170, 0.18) calc(3rem - 1px),
+    rgba(120, 140, 170, 0.18) 3rem
   );
-  background-size: 100% 2.5rem;
-  background-position: 0 0.75rem;
+  background-size: 100% 3rem;
+  background-position: 0 calc(2.75rem - 0.1rem);
   transition: background-color 0.3s ease;
 }
 
-/* Red margin line (notebook style) */
+[data-theme="dark"] .typing-area {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent calc(3rem - 1px),
+    rgba(140, 160, 190, 0.07) calc(3rem - 1px),
+    rgba(140, 160, 190, 0.07) 3rem
+  );
+}
+
+/* Double red margin lines */
 .typing-area::before {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 3.25rem;
-  width: 1px;
-  background: rgba(184, 46, 20, 0.15);
+  left: 3.6rem;
+  width: 3px;
+  border-left: 1px solid rgba(184, 46, 20, 0.2);
+  border-right: 1px solid rgba(184, 46, 20, 0.13);
+  pointer-events: none;
   z-index: 1;
 }
 
@@ -587,7 +589,7 @@ body::after {
   font-weight: 600;
   font-size: 0.75rem;
   padding: 0.4rem 1rem 0.35rem;
-  border-radius: 3px;
+  border-radius: 1px;
   z-index: 10;
   pointer-events: none;
   white-space: nowrap;
@@ -630,15 +632,15 @@ body::after {
   mask-image: linear-gradient(
     to right,
     transparent 0%,
-    black 8%,
-    black 85%,
+    black 3%,
+    black 92%,
     transparent 100%
   );
   -webkit-mask-image: linear-gradient(
     to right,
     transparent 0%,
-    black 8%,
-    black 85%,
+    black 3%,
+    black 92%,
     transparent 100%
   );
 }
@@ -757,7 +759,7 @@ body::after {
   max-width: 28rem;
   width: 90%;
   overflow: hidden;
-  border-radius: 3px;
+  border-radius: 0;
   transform: scale(0.95) translateY(20px);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
@@ -781,17 +783,10 @@ body::after {
 }
 
 .results-header {
-  background:
-    linear-gradient(
-      170deg,
-      rgba(255,255,255,0.05) 0%,
-      transparent 50%
-    ),
-    var(--key-active-top);
   padding: 2rem 2rem 1.5rem;
   text-align: center;
   position: relative;
-  /* Leather-like texture on header */
+  background-color: var(--key-active-top);
   background-image:
     linear-gradient(170deg, rgba(255,255,255,0.05) 0%, transparent 50%),
     repeating-linear-gradient(
@@ -801,7 +796,6 @@ body::after {
       rgba(0,0,0,0.03) 2px,
       rgba(0,0,0,0.03) 3px
     );
-  background-color: var(--key-active-top);
   border-bottom: 2px solid rgba(0,0,0,0.15);
 }
 
@@ -914,7 +908,7 @@ body::after {
   font-size: 0.9rem;
   padding: 0.8rem 2rem;
   border: 2px solid var(--accent);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--accent);
   color: #fff;
   cursor: pointer;
@@ -950,7 +944,7 @@ body::after {
   font-size: 0.8rem;
   padding: 0.55rem 1.4rem;
   border: 2px solid var(--key-rim);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--key-top);
   color: var(--key-letter);
   cursor: pointer;
@@ -990,7 +984,7 @@ body::after {
   font-size: 0.8rem;
   padding: 0.65rem 2rem;
   border: 2px solid var(--key-rim);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--key-top);
   color: var(--key-letter);
   cursor: pointer;
@@ -1047,7 +1041,7 @@ body::after {
   padding: 0.6rem 0.5rem;
   border: 2px solid var(--key-rim);
   border-right: none;
-  border-radius: 6px 0 0 6px;
+  border-radius: 3px 0 0 3px;
   background: var(--key-top);
   color: var(--key-letter);
   cursor: pointer;
@@ -1079,7 +1073,7 @@ body::after {
   position: relative;
   /* Clipboard backing — dark cardboard */
   background: #5c4a3a;
-  border-radius: 8px 0 0 8px;
+  border-radius: 3px 0 0 3px;
   box-shadow:
     -2px 4px 12px rgba(0,0,0,0.25),
     inset 0 0 30px rgba(0,0,0,0.15);
@@ -1288,7 +1282,6 @@ body::after {
 @media (max-width: 768px) {
   .app-background { padding: 1.5rem 0.75rem 3rem; }
   .header h1 { font-size: 1.6rem; }
-  .header p { font-size: 0.85rem; }
 
   .metrics-bar {
     flex-direction: column;
@@ -1305,8 +1298,8 @@ body::after {
   .timer-circle { width: 5.5rem; height: 5.5rem; }
   .timer-circle .timer-value { font-size: 1.35rem; }
 
-  .typing-area { padding: 2rem 1rem 1.5rem; }
-  .typing-area::before { left: 2rem; }
+  .typing-area { padding: 2rem 1rem 1.5rem 3.5rem; }
+  .typing-area::before { left: 2.6rem; }
   .words-container {
     font-size: 1.2rem;
     line-height: 2.2rem;

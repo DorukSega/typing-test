@@ -216,7 +216,7 @@
   function updateMetrics() {
     const total = state.typedResults.length;
     const correctWords = Math.max(0, total - state.mistakes);
-    const acc = total > 0 ? Math.round((correctWords / total) * 100) : 0;
+    const acc = total > 0 ? Math.round((correctWords / total) * 100) : 100;
 
     // Live metrics show cumulative counts — rate is calculated on results screen
     dom.wpmValue.textContent = correctWords;
@@ -523,15 +523,22 @@
     document.cookie = name + '=' + value + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
   }
 
+  const iconMoon = document.getElementById('theme-icon-moon');
+  const iconSun = document.getElementById('theme-icon-sun');
+
   function applyTheme(theme) {
     if (theme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
-      dom.themeToggle.textContent = '☀️';
+      iconMoon.style.display = 'none';
+      iconSun.style.display = '';
       dom.timerTrack.setAttribute('stroke', '#3a3532');
+      dom.timerProgress.setAttribute('stroke', '#d44020');
     } else {
       document.documentElement.removeAttribute('data-theme');
-      dom.themeToggle.textContent = '🌙';
+      iconMoon.style.display = '';
+      iconSun.style.display = 'none';
       dom.timerTrack.setAttribute('stroke', '#ddd6ca');
+      dom.timerProgress.setAttribute('stroke', '#b82e14');
     }
   }
 
@@ -646,13 +653,20 @@
     results.forEach((r, i) => {
       const tr = document.createElement('tr');
       if (r.wpm === bestWpm) tr.className = 'best-row';
-      tr.innerHTML =
-        `<td class="col-rank">${i + 1}</td>` +
-        `<td class="col-wpm">${r.wpm}</td>` +
-        `<td>${r.cpm}</td>` +
-        `<td>${r.acc}%</td>` +
-        `<td>${formatDuration(r.duration)}</td>` +
-        `<td class="col-date">${formatDate(r.date)}</td>`;
+      const cells = [
+        ['col-rank', i + 1],
+        ['col-wpm', r.wpm],
+        ['', r.cpm],
+        ['', r.acc + '%'],
+        ['', formatDuration(r.duration)],
+        ['col-date', formatDate(r.date)],
+      ];
+      cells.forEach(([cls, text]) => {
+        const td = document.createElement('td');
+        if (cls) td.className = cls;
+        td.textContent = text;
+        tr.appendChild(td);
+      });
       dom.leaderboardBody.appendChild(tr);
     });
   }
