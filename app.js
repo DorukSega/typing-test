@@ -21,8 +21,9 @@
     mistakes: 0,
 
     currentInput: '',
-    _cursorTimeout: null,
   };
+
+  const STORAGE_KEY = 'typing-test-results';
 
   // ===== DOM =====
   const dom = {
@@ -47,7 +48,14 @@
     resultsSubtitle: document.getElementById('results-subtitle'),
     resultsEmoji: document.getElementById('results-emoji'),
     btnTryAgain: document.getElementById('btn-try-again'),
+    btnSaveResult: document.getElementById('btn-save-result'),
     themeToggle: document.getElementById('theme-toggle'),
+    leaderboardSidebar: document.getElementById('leaderboard-sidebar'),
+    leaderboardTab: document.getElementById('leaderboard-tab'),
+    leaderboardBody: document.getElementById('leaderboard-body'),
+    leaderboardTable: document.getElementById('leaderboard-table'),
+    leaderboardEmpty: document.getElementById('leaderboard-empty'),
+    leaderboardClear: document.getElementById('leaderboard-clear'),
   };
 
   // ===== Word Management =====
@@ -69,123 +77,150 @@
   }
 
   // ===== Word Rendering =====
-  // All words are rendered upfront as span elements.
-  // Each word is a .word containing .char spans for each letter.
-  // The cursor is a single element moved between words.
+  const VISIBLE_WORDS = 80;
 
-  const VISIBLE_WORDS = 80; // Render this many words at a time
-  let wordElements = [];    // DOM references to .word elements
+  // Each entry: { el, chars: [...charEls], wrongInserts: [] }
+  let wordData = [];
 
   function buildWords() {
     dom.wordsInner.innerHTML = '';
-    wordElements = [];
+    wordData = [];
 
     const frag = document.createDocumentFragment();
     const count = Math.min(VISIBLE_WORDS, state.words.length);
 
     for (let i = 0; i < count; i++) {
-      const wordEl = createWordElement(state.words[i], i);
-      wordElements.push(wordEl);
-      frag.appendChild(wordEl);
+      const wd = createWordData(state.words[i], i);
+      wordData.push(wd);
+      frag.appendChild(wd.el);
     }
 
     dom.wordsInner.appendChild(frag);
 
-    // Mark current word & position cursor
-    if (wordElements.length > 0) {
-      wordElements[0].classList.add('current');
+    if (wordData.length > 0) {
+      wordData[0].el.classList.add('current');
     }
 
-    // Reset scroll
-    dom.wordsInner.style.transform = 'translateY(0)';
+    // Reset scroll without animation
+    dom.wordsInner.style.transition = 'none';
+    dom.wordsInner.style.transform = 'translateX(0)';
+    // Force reflow, then restore transition
+    dom.wordsInner.offsetWidth;
+    dom.wordsInner.style.transition = '';
   }
 
-  function createWordElement(word, index) {
+  function createWordData(word, index) {
     const wordEl = document.createElement('span');
     wordEl.className = 'word';
     wordEl.dataset.index = index;
 
+    const chars = [];
     for (let i = 0; i < word.length; i++) {
       const charEl = document.createElement('span');
       charEl.className = 'char pending';
       charEl.textContent = word[i];
       wordEl.appendChild(charEl);
+      chars.push(charEl);
     }
 
-    return wordEl;
+    return { el: wordEl, chars, wrongInserts: [] };
   }
 
   // ===== Update Current Word Display =====
+  // Wrong chars are INSERTED between correct and pending — they never
+  // replace the expected characters. Original chars always show expected text.
+  //
+  // "keep" typed as "kedd" → k(correct) e(correct) d̶d̶(wrong inserts) e(pending) p(pending)
+
+  function clearWrongInserts(wd) {
+    for (let i = 0; i < wd.wrongInserts.length; i++) {
+      const el = wd.wrongInserts[i];
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }
+    wd.wrongInserts.length = 0;
+  }
+
   function updateCurrentWord() {
-    const wordEl = wordElements[state.currentIndex];
-    if (!wordEl) return;
+    const wd = wordData[state.currentIndex];
+    if (!wd) return;
 
     const word = state.words[state.currentIndex];
     const input = state.currentInput;
+    const chars = wd.chars;
 
-    // Remove any previous extra chars
-    const existingExtras = wordEl.querySelectorAll('.char.extra');
-    existingExtras.forEach(el => el.remove());
+    // Clear previous wrong inserts
+    clearWrongInserts(wd);
 
-    const chars = wordEl.querySelectorAll('.char:not(.extra)');
+    // Count leading correct characters (break at first mismatch)
+    let correctCount = 0;
+    for (let i = 0; i < input.length && i < word.length; i++) {
+      if (input[i] === word[i]) correctCount++;
+      else break;
+    }
 
-    // Update each character's state
+    // Update original chars — correct or pending, text never changes
     for (let i = 0; i < chars.length; i++) {
-      if (i < input.length) {
-        if (input[i] === word[i]) {
-          chars[i].className = 'char correct';
-          chars[i].textContent = word[i]; // ensure correct char shown
+      chars[i].className = i < correctCount ? 'char correct' : 'char pending';
+    }
+
+    // Insert wrong typed chars (everything after the correct streak)
+    const wrongInput = input.slice(correctCount);
+    if (wrongInput.length > 0) {
+      // Insert before the first pending char, or append if all matched
+      const insertBefore = correctCount < chars.length ? chars[correctCount] : null;
+      for (let i = 0; i < wrongInput.length; i++) {
+        const wrongEl = document.createElement('span');
+        wrongEl.className = 'char wrong';
+        wrongEl.textContent = wrongInput[i];
+        if (insertBefore) {
+          wd.el.insertBefore(wrongEl, insertBefore);
         } else {
-          chars[i].className = 'char wrong';
-          chars[i].textContent = input[i]; // show what was actually typed
-          chars[i].dataset.expected = word[i]; // remember expected
+          wd.el.appendChild(wrongEl);
         }
-      } else {
-        chars[i].className = 'char pending';
-        // Restore original character if it was previously overwritten
-        if (chars[i].dataset.expected) {
-          chars[i].textContent = chars[i].dataset.expected;
-          delete chars[i].dataset.expected;
-        }
+        wd.wrongInserts.push(wrongEl);
       }
     }
-
-    // Show extra typed characters beyond word length
-    if (input.length > word.length) {
-      for (let i = word.length; i < input.length; i++) {
-        const extraEl = document.createElement('span');
-        extraEl.className = 'char extra';
-        extraEl.textContent = input[i];
-        wordEl.appendChild(extraEl);
-      }
-    }
-
   }
 
-  // ===== Auto-scroll words =====
-  function scrollToCurrentWord() {
-    const wordEl = wordElements[state.currentIndex];
-    if (!wordEl) return;
+  // ===== Horizontal scroll =====
+  // CSS transition handles the smooth animation. JS just sets the target.
+  // Transition is on .words-inner in CSS (1s ease-out).
+  let currentScrollX = 0;
 
-    // Use offsetTop (relative to wordsInner, unaffected by transform)
-    const lineHeight = parseFloat(getComputedStyle(dom.wordsContainer).lineHeight) || 40;
-    const wordOffset = wordEl.offsetTop;
+  function updateScrollTarget() {
+    const wd = wordData[state.currentIndex];
+    if (!wd) return;
 
-    // Scroll so current word is on the first line
-    // Only scroll forward (never backward during normal typing)
-    const targetScroll = Math.floor(wordOffset / lineHeight) * lineHeight;
-    dom.wordsInner.style.transform = `translateY(-${targetScroll}px)`;
+    const containerWidth = dom.wordsContainer.clientWidth;
+    const target = Math.max(0, wd.el.offsetLeft - containerWidth * 0.2);
+
+    if (target === currentScrollX) return;
+
+    currentScrollX = target;
+    dom.wordsInner.style.transform = `translateX(-${currentScrollX}px)`;
+  }
+
+  function scrollBackForBackspace() {
+    const wd = wordData[state.currentIndex];
+    if (!wd) return;
+
+    const visiblePos = wd.el.offsetLeft - currentScrollX;
+    if (visiblePos >= 0) return;
+
+    const containerWidth = dom.wordsContainer.clientWidth;
+    currentScrollX = Math.max(0, wd.el.offsetLeft - containerWidth * 0.2);
+    dom.wordsInner.style.transform = `translateX(-${currentScrollX}px)`;
   }
 
   // ===== Metrics =====
   function updateMetrics() {
     const total = state.typedResults.length;
-    const wpm = Math.max(0, total - state.mistakes);
-    const cpm = state.typedCharsNum;
-    const acc = total > 0 ? Math.round(((total - state.mistakes) / total) * 100) : 0;
+    const correctWords = Math.max(0, total - state.mistakes);
+    const acc = total > 0 ? Math.round((correctWords / total) * 100) : 0;
 
-    dom.wpmValue.textContent = wpm;
-    dom.cpmValue.textContent = cpm;
+    // Live metrics show cumulative counts — rate is calculated on results screen
+    dom.wpmValue.textContent = correctWords;
+    dom.cpmValue.textContent = state.typedCharsNum;
     dom.accValue.textContent = acc;
   }
 
@@ -219,7 +254,7 @@
       if (remaining <= 0) {
         endTest();
       }
-    }, 50);
+    }, 200);
 
     // Smooth CSS transition for the ring
     requestAnimationFrame(() => {
@@ -245,7 +280,6 @@
 
     const value = dom.input.value;
 
-    // Space = submit word
     if (value.endsWith(' ')) {
       submitWord();
       return;
@@ -253,7 +287,6 @@
 
     state.currentInput = value;
     updateCurrentWord();
-
   }
 
   function handleKeydown(e) {
@@ -265,6 +298,55 @@
         submitWord();
       }
     }
+
+    // Backspace into previous word
+    if (e.key === 'Backspace' && state.currentInput === '' && dom.input.value === '') {
+      e.preventDefault();
+      goBackToPreviousWord();
+    }
+  }
+
+  // ===== Backspace to previous word =====
+  function goBackToPreviousWord() {
+    if (state.currentIndex === 0) return;
+
+    const prevIndex = state.currentIndex - 1;
+    const prevWd = wordData[prevIndex];
+    if (!prevWd) return;
+
+    // Un-mark current word
+    const currentWd = wordData[state.currentIndex];
+    if (currentWd) {
+      currentWd.el.classList.remove('current');
+    }
+
+    // Restore previous word's result from typedResults
+    const prevResult = state.typedResults.pop();
+    if (prevResult) {
+      if (!prevResult.correct) {
+        state.mistakes--;
+      } else {
+        state.typedCharsNum -= prevResult.typed.length;
+      }
+    }
+
+    // Restore the previous word element
+    prevWd.el.classList.remove('typed', 'wrong');
+    prevWd.el.classList.add('current');
+
+    // Move state back
+    state.currentIndex = prevIndex;
+    state.currentInput = prevResult ? prevResult.typed : '';
+    dom.input.value = state.currentInput;
+
+    // Re-render the word with the previous typed input (sync — it's rendering)
+    updateCurrentWord();
+
+    // Everything else async
+    requestAnimationFrame(() => {
+      updateMetrics();
+      scrollBackForBackspace();
+    });
   }
 
   function submitWord() {
@@ -287,27 +369,15 @@
     }
 
     // Mark the current word as typed
-    const wordEl = wordElements[state.currentIndex];
-    if (wordEl) {
-      wordEl.classList.remove('current');
-      wordEl.classList.add('typed');
-      if (!isCorrect) wordEl.classList.add('wrong');
+    const wd = wordData[state.currentIndex];
+    if (wd) {
+      wd.el.classList.remove('current');
+      wd.el.classList.add('typed');
+      if (!isCorrect) wd.el.classList.add('wrong');
 
-      // Remove extra chars & cursor from this word
-      const extras = wordEl.querySelectorAll('.char.extra');
-      extras.forEach(el => el.remove());
-
-      // Reset char display to show original word (faded)
-      const chars = wordEl.querySelectorAll('.char');
-      const word = state.words[state.currentIndex];
-      chars.forEach((c, i) => {
-        c.className = 'char';
-        // Restore original character if it was overwritten by a mistype
-        if (c.dataset.expected) {
-          c.textContent = c.dataset.expected;
-          delete c.dataset.expected;
-        }
-      });
+      // Remove wrong inserts, reset all original chars to base state
+      clearWrongInserts(wd);
+      wd.chars.forEach(c => { c.className = 'char'; });
     }
 
     // Move to next word
@@ -319,35 +389,36 @@
     if (state.currentIndex >= state.words.length - 30) {
       const newWords = shuffle(WORDS);
       state.words = state.words.concat(newWords);
-      // Build new DOM elements
       const frag = document.createDocumentFragment();
       for (let i = 0; i < newWords.length; i++) {
-        const idx = wordElements.length;
-        const el = createWordElement(newWords[i], idx);
-        wordElements.push(el);
-        frag.appendChild(el);
+        const wd = createWordData(newWords[i], wordData.length);
+        wordData.push(wd);
+        frag.appendChild(wd.el);
       }
       dom.wordsInner.appendChild(frag);
     }
 
     // Mark new current word
-    if (wordElements[state.currentIndex]) {
-      wordElements[state.currentIndex].classList.add('current');
+    if (wordData[state.currentIndex]) {
+      wordData[state.currentIndex].el.classList.add('current');
     }
 
-    scrollToCurrentWord();
-    updateMetrics();
+    // Everything non-rendering is async — never block input
+    requestAnimationFrame(() => {
+      updateMetrics();
+      updateScrollTarget();
+    });
   }
 
   // ===== Results =====
   function showResults() {
     const total = state.typedResults.length;
-    const wpm = Math.max(0, total - state.mistakes);
+    const correctWords = Math.max(0, total - state.mistakes);
     const cpm = state.typedCharsNum;
-    const acc = total > 0 ? Math.round(((total - state.mistakes) / total) * 100) : 0;
+    const acc = total > 0 ? Math.round((correctWords / total) * 100) : 0;
 
     const minutesFactor = 60 / state.duration;
-    const scaledWpm = Math.round(wpm * minutesFactor);
+    const scaledWpm = Math.round(correctWords * minutesFactor);
     const scaledCpm = Math.round(cpm * minutesFactor);
 
     dom.resultWpm.textContent = scaledWpm;
@@ -356,13 +427,35 @@
 
     let title, excl, msg, emoji;
     if (scaledWpm < 30) {
-      title = "You're a Turtle."; excl = "Well..."; msg = "It could be better!"; emoji = "🐢";
+      title = "You're a Turtle.";
+      excl = "Well...";
+      msg = "Keep at it, speed comes with practice!";
+      emoji = "🐢";
     } else if (scaledWpm < 40) {
-      title = "You're a T-REX."; excl = "Nice!"; msg = "Keep practicing!"; emoji = "🦖";
+      title = "You're a T-Rex.";
+      excl = "Nice!";
+      msg = "Those tiny arms are getting faster!";
+      emoji = "🦖";
     } else if (scaledWpm < 60) {
-      title = "You're an Octopus."; excl = "Neat!"; msg = "Good job!"; emoji = "🐙";
+      title = "You're a Rabbit.";
+      excl = "Neat!";
+      msg = "Quick fingers, solid rhythm!";
+      emoji = "🐇";
+    } else if (scaledWpm < 80) {
+      title = "You're an Octopus.";
+      excl = "Impressive!";
+      msg = "Eight arms couldn't type faster!";
+      emoji = "🐙";
+    } else if (scaledWpm < 100) {
+      title = "You're a Cheetah.";
+      excl = "Blazing!";
+      msg = "Fastest fingers in the savanna!";
+      emoji = "🐆";
     } else {
-      title = "You're an Octopus."; excl = "Awesome!"; msg = "Congratulations!"; emoji = "🐙";
+      title = "You're a Falcon.";
+      excl = "Legendary!";
+      msg = "Your fingers break the sound barrier!";
+      emoji = "🦅";
     }
 
     dom.resultsEmoji.textContent = emoji;
@@ -370,6 +463,17 @@
     dom.resultsSubtitle.innerHTML =
       `${excl} You type with the speed of <span class="highlight">${scaledWpm} WPM</span> ` +
       `(${scaledCpm} CPM). Your accuracy was <span class="bold">${acc}%</span>. ${msg}`;
+
+    // Prepare result for saving
+    lastResult = {
+      wpm: scaledWpm,
+      cpm: scaledCpm,
+      acc: acc,
+      duration: state.duration,
+      date: Date.now(),
+    };
+    dom.btnSaveResult.textContent = 'Save result';
+    dom.btnSaveResult.classList.remove('saved');
 
     dom.resultsOverlay.classList.add('visible');
   }
@@ -399,6 +503,7 @@
     dom.timerProgress.style.transition = 'none';
     dom.timerProgress.style.strokeDashoffset = '0px';
 
+    currentScrollX = 0;
     buildWords();
     updateMetrics();
     renderTimer();
@@ -435,7 +540,6 @@
     if (saved) {
       applyTheme(saved);
     }
-    // else default is light (no data-theme attribute)
   }
 
   dom.themeToggle.addEventListener('click', () => {
@@ -485,8 +589,83 @@
 
   dom.input.addEventListener('paste', (e) => e.preventDefault());
 
+  // ===== Leaderboard — localStorage =====
+  let lastResult = null; // holds the most recent result for saving
+
+  function loadResults() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveResultToStorage() {
+    if (!lastResult) return;
+    const results = loadResults();
+    results.push(lastResult);
+    // Sort by WPM descending, keep top 20
+    results.sort((a, b) => b.wpm - a.wpm);
+    if (results.length > 20) results.length = 20;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(results));
+    lastResult = null;
+    dom.btnSaveResult.textContent = 'Saved!';
+    dom.btnSaveResult.classList.add('saved');
+    renderLeaderboard();
+  }
+
+  function clearResults() {
+    localStorage.removeItem(STORAGE_KEY);
+    renderLeaderboard();
+  }
+
+  function formatDate(ts) {
+    const d = new Date(ts);
+    const mon = d.toLocaleString('default', { month: 'short' });
+    return `${mon} ${d.getDate()}, ${d.getFullYear()}`;
+  }
+
+  function formatDuration(secs) {
+    if (secs < 120) return secs + 's';
+    return Math.round(secs / 60) + 'min';
+  }
+
+  function renderLeaderboard() {
+    const results = loadResults();
+    if (results.length === 0) {
+      dom.leaderboardTable.style.display = 'none';
+      dom.leaderboardEmpty.style.display = '';
+      return;
+    }
+    dom.leaderboardTable.style.display = '';
+    dom.leaderboardEmpty.style.display = 'none';
+
+    dom.leaderboardBody.innerHTML = '';
+    const bestWpm = results[0].wpm;
+
+    results.forEach((r, i) => {
+      const tr = document.createElement('tr');
+      if (r.wpm === bestWpm) tr.className = 'best-row';
+      tr.innerHTML =
+        `<td class="col-rank">${i + 1}</td>` +
+        `<td class="col-wpm">${r.wpm}</td>` +
+        `<td>${r.cpm}</td>` +
+        `<td>${r.acc}%</td>` +
+        `<td>${formatDuration(r.duration)}</td>` +
+        `<td class="col-date">${formatDate(r.date)}</td>`;
+      dom.leaderboardBody.appendChild(tr);
+    });
+  }
+
+  dom.btnSaveResult.addEventListener('click', saveResultToStorage);
+  dom.leaderboardClear.addEventListener('click', clearResults);
+  dom.leaderboardTab.addEventListener('click', () => {
+    dom.leaderboardSidebar.classList.toggle('open');
+  });
+
   // ===== Init =====
   initTheme();
   resetTest();
+  renderLeaderboard();
 
 })();

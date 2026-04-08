@@ -6,6 +6,9 @@
   <title>Typing Speed Test — Check Your WPM</title>
   <meta name="description" content="Free typing speed test. Check your WPM and CPM typing scores in 60 seconds. Practice and improve your typing speed.">
   <meta name="theme-color" content="#4a3828">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap">
   <link rel="stylesheet" href="index.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌨️</text></svg>">
 </head>
@@ -17,7 +20,6 @@
     <!-- Header -->
     <header class="header">
       <h1>Typing Speed Test</h1>
-      <p>Test your typing skills</p>
     </header>
 
     <!-- Duration Selector -->
@@ -35,11 +37,11 @@
         <div class="metrics-group">
           <div class="metric-box" id="metric-wpm">
             <span class="value" id="wpm-value">0</span>
-            <span class="label">words/min</span>
+            <span class="label">words</span>
           </div>
           <div class="metric-box" id="metric-cpm">
             <span class="value" id="cpm-value">0</span>
-            <span class="label">chars/min</span>
+            <span class="label">chars</span>
           </div>
           <div class="metric-box" id="metric-acc">
             <span class="value" id="acc-value">0</span>
@@ -47,15 +49,33 @@
           </div>
         </div>
 
-        <!-- Timer -->
+        <!-- Timer — analog gauge with tick marks -->
         <div class="timer-container">
           <div class="timer-circle" id="timer-circle">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 110" width="110" height="110">
+              <!-- Outer decorative ring -->
+              <circle cx="55" cy="55" r="53" fill="none" stroke="var(--gauge-rim)" stroke-width="1" opacity="0.3" />
+              <!-- Track -->
               <circle cx="55" cy="55" r="53" fill="none" id="timer-track" stroke="#ddd6ca" stroke-width="3" stroke-dasharray="332px" />
+              <!-- Tick marks — 12 positions like a clock -->
+              <g class="timer-ticks" stroke="var(--gauge-rim)" stroke-width="1.5" stroke-linecap="round">
+                <line x1="55" y1="5" x2="55" y2="10" />
+                <line x1="55" y1="100" x2="55" y2="105" />
+                <line x1="5" y1="55" x2="10" y2="55" />
+                <line x1="100" y1="55" x2="105" y2="55" />
+                <!-- Diagonal ticks -->
+                <line x1="19.7" y1="19.7" x2="23.2" y2="23.2" />
+                <line x1="90.3" y1="19.7" x2="86.8" y2="23.2" />
+                <line x1="19.7" y1="90.3" x2="23.2" y2="86.8" />
+                <line x1="90.3" y1="90.3" x2="86.8" y2="86.8" />
+              </g>
+              <!-- Progress arc -->
               <circle cx="55" cy="55" r="53" fill="none" stroke="#b82e14" stroke-width="3"
                 stroke-dasharray="332px" stroke-dashoffset="0" stroke-linecap="round"
                 class="timer-progress" id="timer-progress"
                 style="transform: rotate(-90deg); transform-origin: center center;" />
+              <!-- Glass highlight -->
+              <ellipse cx="45" cy="38" rx="18" ry="12" fill="white" opacity="0.04" />
             </svg>
             <span class="timer-value" id="timer-value">60</span>
             <span class="timer-label">seconds</span>
@@ -110,8 +130,41 @@
           </div>
         </div>
         <div class="results-actions">
+          <button class="btn-save-result" id="btn-save-result">Save result</button>
           <button class="btn-try-again" id="btn-try-again">Try again</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard sidebar -->
+  <div class="leaderboard-sidebar" id="leaderboard-sidebar">
+    <button class="leaderboard-tab" id="leaderboard-tab">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/>
+      </svg>
+      <span>Records</span>
+    </button>
+    <div class="leaderboard-panel" id="leaderboard-panel">
+      <div class="leaderboard-inner">
+        <div class="leaderboard-header">
+          <h2 class="leaderboard-title">Personal Best</h2>
+          <button class="leaderboard-clear" id="leaderboard-clear" title="Clear all records">Clear</button>
+        </div>
+        <div class="leaderboard-empty" id="leaderboard-empty">No saved results yet</div>
+        <table class="leaderboard-table" id="leaderboard-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>WPM</th>
+              <th>CPM</th>
+              <th>Acc</th>
+              <th>Dur</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
       </div>
     </div>
   </div>
