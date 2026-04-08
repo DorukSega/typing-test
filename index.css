@@ -15,7 +15,6 @@
 
   /* Paper — warm ivory with tactile feel */
   --paper: #f6f1e7;
-  --paper-shadow: #c5b9a8;
   --paper-edge: #e6ddd0;
   --paper-line: #ede6db;
 
@@ -23,7 +22,6 @@
   --ink: #1a1612;
   --ink-secondary: #5a5248;
   --ink-faded: #a09584;
-  --ink-ghost: #c8bfb0;
 
   /* Mechanical accents */
   --accent: #b82e14;
@@ -44,8 +42,6 @@
   /* Gauge / timer — brass instrument */
   --gauge-face: #f0ece4;
   --gauge-rim: #8a7e6e;
-  --gauge-track: #ddd6ca;
-  --gauge-needle: #b82e14;
 
   /* Components */
   --card-shadow:
@@ -54,7 +50,6 @@
     0 24px 48px rgba(0,0,0,0.15);
   --inset: inset 0 2px 6px rgba(40,30,15,0.12);
   --key-shadow: 0 4px 0 var(--key-side), 0 4px 8px rgba(0,0,0,0.2);
-  --border: 2px solid #a89c8c;
   --border-light: 1px solid var(--paper-edge);
 
   /* Overlay */
@@ -80,14 +75,12 @@
   --bg-desk-grain: rgba(255,255,255,0.015);
 
   --paper: #1e1c1a;
-  --paper-shadow: #0a0908;
   --paper-edge: #2e2a26;
   --paper-line: #242120;
 
   --ink: #e0d8cc;
   --ink-secondary: #a89c8c;
   --ink-faded: #5a5248;
-  --ink-ghost: #3e382f;
 
   --accent: #d44020;
   --accent-deep: #a83018;
@@ -105,8 +98,6 @@
 
   --gauge-face: #222120;
   --gauge-rim: #3a3532;
-  --gauge-track: #3a3532;
-  --gauge-needle: #d44020;
 
   --card-shadow:
     0 2px 4px rgba(0,0,0,0.4),
@@ -114,7 +105,6 @@
     0 24px 48px rgba(0,0,0,0.3);
   --inset: inset 0 2px 6px rgba(0,0,0,0.35);
   --key-shadow: 0 4px 0 var(--key-side), 0 4px 8px rgba(0,0,0,0.4);
-  --border: 2px solid #2e2a26;
   --border-light: 1px solid #2e2a26;
 
   --overlay-bg: rgba(0, 0, 0, 0.85);
@@ -229,7 +219,6 @@ body::after {
   letter-spacing: -0.02em;
   text-transform: uppercase;
   line-height: 1.1;
-  margin-bottom: 0.3rem;
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
@@ -811,14 +800,10 @@ body::after {
 }
 
 .results-avatar {
-  width: 4rem;
-  height: 4rem;
+  width: 3.5rem;
+  height: 3.5rem;
   margin: 0 auto 0.75rem;
-}
-
-.results-avatar .emoji {
-  font-size: 3.5rem;
-  line-height: 1;
+  color: var(--key-active-letter);
 }
 
 .results-title {

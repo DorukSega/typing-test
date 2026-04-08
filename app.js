@@ -46,7 +46,7 @@
     resultAcc: document.getElementById('result-acc'),
     resultsTitle: document.getElementById('results-title'),
     resultsSubtitle: document.getElementById('results-subtitle'),
-    resultsEmoji: document.getElementById('results-emoji'),
+    resultsAvatar: document.getElementById('results-avatar'),
     btnTryAgain: document.getElementById('btn-try-again'),
     btnSaveResult: document.getElementById('btn-save-result'),
     themeToggle: document.getElementById('theme-toggle'),
@@ -184,7 +184,6 @@
 
   // ===== Horizontal scroll =====
   // CSS transition handles the smooth animation. JS just sets the target.
-  // Transition is on .words-inner in CSS (1s ease-out).
   let currentScrollX = 0;
 
   function updateScrollTarget() {
@@ -425,40 +424,50 @@
     dom.resultCpm.textContent = scaledCpm;
     dom.resultAcc.textContent = acc;
 
-    let title, excl, msg, emoji;
+    // SVG icons for each tier — simple line drawings that always render
+    const icons = {
+      turtle: '<svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="26" rx="14" ry="10"/><path d="M24 16c0-4 3-7 3-7"/><circle cx="28" cy="12" r="1.5" fill="currentColor"/><path d="M10 26c-3 2-5 5-4 6s3-1 5-3"/><path d="M38 26c3 2 5 5 4 6s-3-1-5-3"/><path d="M14 34c-1 3-1 6 0 6s2-2 2-5"/><path d="M34 34c1 3 1 6 0 6s-2-2-2-5"/><path d="M18 19c2-1 4-1 6-1s4 0 6 1"/><line x1="20" y1="22" x2="20" y2="32"/><line x1="28" y1="22" x2="28" y2="32"/><line x1="16" y1="26" x2="32" y2="26"/></svg>',
+      trex: '<svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 34v8M20 36v6"/><path d="M12 18c0-6 4-10 10-10h4c4 0 7 2 8 5l2 5h-6l1 3c0 2-1 3-3 3h-4"/><path d="M14 18v16h8l2-4 2 4h4V22"/><circle cx="22" cy="14" r="1.5" fill="currentColor"/><path d="M30 22l3-1 1 3"/><path d="M26 8c1-2 3-3 5-2"/></svg>',
+      rabbit: '<svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="32" rx="10" ry="8"/><circle cx="24" cy="20" r="7"/><path d="M20 14c-1-6-2-10-1-12s3 0 3 5"/><path d="M28 14c1-6 2-10 1-12s-3 0-3 5"/><circle cx="21" cy="19" r="1.5" fill="currentColor"/><circle cx="27" cy="19" r="1.5" fill="currentColor"/><path d="M23 23c0 1 2 1 2 0"/><path d="M18 38c-1 2 0 4 1 4s2-2 2-4"/><path d="M28 38c1 2 0 4-1 4s-2-2-2-4"/><path d="M34 30c2 0 4-1 4 0s-3 3-5 2"/></svg>',
+      octopus: '<svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="18" rx="12" ry="10"/><circle cx="20" cy="16" r="2" fill="currentColor"/><circle cx="28" cy="16" r="2" fill="currentColor"/><path d="M12 26c-2 4-4 10-2 12"/><path d="M16 28c-1 4-1 10 1 11"/><path d="M20 29c0 4 0 10 1 11"/><path d="M28 29c0 4 0 10-1 11"/><path d="M32 28c1 4 1 10-1 11"/><path d="M36 26c2 4 4 10 2 12"/></svg>',
+      cheetah: '<svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20c4-2 8-4 14-4s10 2 14 6l4 2"/><path d="M12 24v10l-2 4"/><path d="M16 26v8l-1 4"/><path d="M30 26v8l1 4"/><path d="M34 24v10l2 4"/><ellipse cx="22" cy="22" rx="12" ry="6"/><path d="M36 22c2-1 5-2 6-1"/><circle cx="36" cy="18" r="1.5" fill="currentColor"/><path d="M38 20c2 0 4 0 5 1"/><circle cx="20" cy="22" r="1" fill="currentColor"/><circle cx="24" cy="21" r="1" fill="currentColor"/><circle cx="22" cy="25" r="1" fill="currentColor"/></svg>',
+      falcon: '<svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 8c-4 0-8 4-8 10v6c0 4 2 8 8 12 6-4 8-8 8-12v-6c0-6-4-10-8-10z"/><circle cx="21" cy="18" r="1.5" fill="currentColor"/><circle cx="27" cy="18" r="1.5" fill="currentColor"/><path d="M24 22l-2 3h4z" fill="currentColor"/><path d="M16 18c-6-2-10 0-12 4"/><path d="M32 18c6-2 10 0 12 4"/><path d="M16 22c-8 0-12 4-12 8"/><path d="M32 22c8 0 12 4 12 8"/><path d="M20 36c-1 2-1 4 0 5"/><path d="M28 36c1 2 1 4 0 5"/></svg>',
+    };
+
+    let title, excl, msg, icon;
     if (scaledWpm < 30) {
       title = "You're a Turtle.";
       excl = "Well...";
       msg = "Keep at it, speed comes with practice!";
-      emoji = "🐢";
+      icon = icons.turtle;
     } else if (scaledWpm < 40) {
       title = "You're a T-Rex.";
       excl = "Nice!";
       msg = "Those tiny arms are getting faster!";
-      emoji = "🦖";
+      icon = icons.trex;
     } else if (scaledWpm < 60) {
       title = "You're a Rabbit.";
       excl = "Neat!";
       msg = "Quick fingers, solid rhythm!";
-      emoji = "🐇";
+      icon = icons.rabbit;
     } else if (scaledWpm < 80) {
       title = "You're an Octopus.";
       excl = "Impressive!";
       msg = "Eight arms couldn't type faster!";
-      emoji = "🐙";
+      icon = icons.octopus;
     } else if (scaledWpm < 100) {
       title = "You're a Cheetah.";
       excl = "Blazing!";
       msg = "Fastest fingers in the savanna!";
-      emoji = "🐆";
+      icon = icons.cheetah;
     } else {
       title = "You're a Falcon.";
       excl = "Legendary!";
       msg = "Your fingers break the sound barrier!";
-      emoji = "🦅";
+      icon = icons.falcon;
     }
 
-    dom.resultsEmoji.textContent = emoji;
+    dom.resultsAvatar.innerHTML = icon;
     dom.resultsTitle.textContent = title;
     dom.resultsSubtitle.innerHTML =
       `${excl} You type with the speed of <span class="highlight">${scaledWpm} WPM</span> ` +
